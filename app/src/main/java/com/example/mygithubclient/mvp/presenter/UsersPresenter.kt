@@ -7,9 +7,12 @@ import com.example.mygithubclient.mvp.presenter.list.IUserListPresenter
 import com.example.mygithubclient.mvp.view.UsersView
 import com.example.mygithubclient.mvp.view.list.UserItemView
 import com.example.mygithubclient.navigation.Screens
+import io.reactivex.rxjava3.core.Observer
+import io.reactivex.rxjava3.disposables.Disposable
 import moxy.MvpPresenter
 import ru.terrakok.cicerone.Router
 
+private const val TAG = "UsersPresenter"
 class UsersPresenter(private val usersRepo: GithubUsersRepo, private val router: Router) :
     MvpPresenter<UsersView>() {
 
@@ -27,6 +30,30 @@ class UsersPresenter(private val usersRepo: GithubUsersRepo, private val router:
     }
 
     val usersListPresenter = UsersListPresenter()
+    private var disposable: Disposable? = null
+
+    private val usersObserver = object : Observer<GithubUser> {
+        override fun onSubscribe(d: Disposable?) {
+            disposable = d
+        }
+
+        override fun onNext(t: GithubUser?) {
+            if (t != null) {
+                usersListPresenter.users.add(t)
+                Log.v(TAG, t.login)
+            }
+        }
+
+        override fun onError(e: Throwable?) {
+            if (e != null) {
+                Log.v(TAG, e.message.toString())
+            }
+        }
+
+        override fun onComplete() {
+            Log.v(TAG, "onComplete()")
+        }
+    }
 
     override fun onFirstViewAttach() {
         super.onFirstViewAttach()
@@ -34,17 +61,12 @@ class UsersPresenter(private val usersRepo: GithubUsersRepo, private val router:
         loadData()
 
         usersListPresenter.itemClickListener = { itemView ->
-
-            router.navigateTo(Screens.UserScreen(usersRepo.getUsers()[itemView.pos]))
-
-            Log.v("UsersPresenter", usersRepo.getUsers()[itemView.pos].login)
-
+            router.navigateTo(Screens.UserScreen(usersListPresenter.users[itemView.pos]))
         }
     }
 
     private fun loadData() {
-        val users = usersRepo.getUsers()
-        usersListPresenter.users.addAll(users)
+        usersRepo.getUsers().subscribe(usersObserver)
         viewState.updateList()
     }
 
@@ -52,4 +74,5 @@ class UsersPresenter(private val usersRepo: GithubUsersRepo, private val router:
         router.exit()
         return true
     }
+
 }
