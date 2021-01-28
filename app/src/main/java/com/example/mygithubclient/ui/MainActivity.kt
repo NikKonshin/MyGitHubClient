@@ -1,7 +1,6 @@
 package com.example.mygithubclient.ui
 
 import android.os.Bundle
-import android.util.Log
 import com.example.mygithubclient.App
 import com.example.mygithubclient.R
 import com.example.mygithubclient.mvp.presenter.MainPresenter

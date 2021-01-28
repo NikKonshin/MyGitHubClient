@@ -1,19 +1,21 @@
 package com.example.mygithubclient.mvp.presenter
 
-import android.util.Log
 import com.example.mygithubclient.mvp.model.entity.GithubUser
-import com.example.mygithubclient.mvp.model.entity.GithubUsersRepo
+import com.example.mygithubclient.mvp.model.repo.IGithubUsersRepo
 import com.example.mygithubclient.mvp.presenter.list.IUserListPresenter
 import com.example.mygithubclient.mvp.view.UsersView
 import com.example.mygithubclient.mvp.view.list.UserItemView
 import com.example.mygithubclient.navigation.Screens
-import io.reactivex.rxjava3.core.Observer
+import io.reactivex.rxjava3.core.Scheduler
 import io.reactivex.rxjava3.disposables.Disposable
 import moxy.MvpPresenter
 import ru.terrakok.cicerone.Router
 
-private const val TAG = "UsersPresenter"
-class UsersPresenter(private val usersRepo: GithubUsersRepo, private val router: Router) :
+class UsersPresenter(
+    private val mainThreadScheduler: Scheduler,
+    private val usersRepo: IGithubUsersRepo,
+    private val router: Router
+) :
     MvpPresenter<UsersView>() {
 
     class UsersListPresenter : IUserListPresenter {
@@ -25,35 +27,12 @@ class UsersPresenter(private val usersRepo: GithubUsersRepo, private val router:
 
         override fun bindView(view: UserItemView) {
             val user = users[view.pos]
-            view.setLogin(user.login)
+            user.login?.let { view.setLogin(it) }
+            user.avatarUrl?.let { view.loadAvatar(it) }
         }
     }
 
     val usersListPresenter = UsersListPresenter()
-    private var disposable: Disposable? = null
-
-    private val usersObserver = object : Observer<GithubUser> {
-        override fun onSubscribe(d: Disposable?) {
-            disposable = d
-        }
-
-        override fun onNext(t: GithubUser?) {
-            if (t != null) {
-                usersListPresenter.users.add(t)
-                Log.v(TAG, t.login)
-            }
-        }
-
-        override fun onError(e: Throwable?) {
-            if (e != null) {
-                Log.v(TAG, e.message.toString())
-            }
-        }
-
-        override fun onComplete() {
-            Log.v(TAG, "onComplete()")
-        }
-    }
 
     override fun onFirstViewAttach() {
         super.onFirstViewAttach()
@@ -61,18 +40,31 @@ class UsersPresenter(private val usersRepo: GithubUsersRepo, private val router:
         loadData()
 
         usersListPresenter.itemClickListener = { itemView ->
-            router.navigateTo(Screens.UserScreen(usersListPresenter.users[itemView.pos]))
+            usersRepo
+                .getUserData(usersListPresenter.users[itemView.pos].login)
+                .observeOn(mainThreadScheduler)
+                .subscribe({
+                    router.navigateTo(Screens.UserScreen(it))
+                },{
+                    println("Error: ${it.message}")
+                })
         }
     }
 
     private fun loadData() {
-        usersRepo.getUsers().subscribe(usersObserver)
-        viewState.updateList()
+        usersRepo.getUsers()
+            .observeOn(mainThreadScheduler)
+            .subscribe({ users ->
+                usersListPresenter.users.clear()
+                usersListPresenter.users.addAll(users)
+                viewState.updateList()
+            }, {
+                println("Error: ${it.message}")
+            })
     }
 
     fun backPressed(): Boolean {
         router.exit()
         return true
     }
-
 }
