@@ -46,7 +46,7 @@ class UserPresenter(
     }
 
     private fun loadData() {
-        userRepositories.getRepositories(user.login)
+        userRepositories.getRepositories(user)
             .observeOn(mainThreadScheduler)
             .subscribe({ repositories ->
                 repositoryListPresenter.repositories.clear()

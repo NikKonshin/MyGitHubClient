@@ -41,7 +41,7 @@ class UsersPresenter(
 
         usersListPresenter.itemClickListener = { itemView ->
             usersRepo
-                .getUserData(usersListPresenter.users[itemView.pos].login)
+                .getUserData(usersListPresenter.users[itemView.pos])
                 .observeOn(mainThreadScheduler)
                 .subscribe({
                     router.navigateTo(Screens.UserScreen(it))
