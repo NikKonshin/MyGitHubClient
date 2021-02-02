@@ -10,6 +10,7 @@ import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
 
 class RoomGithubRepositoriesCache(private val db: Database) : IGithubRepositoriesCache {
+
     override fun insert(user: GithubUser, repository: List<GithubRepository>) =
         Completable.fromAction {
             val roomUser = db.userDao.findByLogin(user.login)

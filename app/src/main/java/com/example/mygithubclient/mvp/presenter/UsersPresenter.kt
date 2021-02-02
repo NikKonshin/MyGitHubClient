@@ -7,16 +7,20 @@ import com.example.mygithubclient.mvp.view.UsersView
 import com.example.mygithubclient.mvp.view.list.UserItemView
 import com.example.mygithubclient.navigation.Screens
 import io.reactivex.rxjava3.core.Scheduler
-import io.reactivex.rxjava3.disposables.Disposable
 import moxy.MvpPresenter
 import ru.terrakok.cicerone.Router
+import javax.inject.Inject
 
-class UsersPresenter(
-    private val mainThreadScheduler: Scheduler,
-    private val usersRepo: IGithubUsersRepo,
-    private val router: Router
-) :
-    MvpPresenter<UsersView>() {
+class UsersPresenter() : MvpPresenter<UsersView>() {
+
+    @Inject
+    lateinit var mainThreadScheduler: Scheduler
+
+    @Inject
+    lateinit var usersRepo: IGithubUsersRepo
+
+    @Inject
+    lateinit var router: Router
 
     class UsersListPresenter : IUserListPresenter {
         val users = mutableListOf<GithubUser>()
@@ -45,7 +49,7 @@ class UsersPresenter(
                 .observeOn(mainThreadScheduler)
                 .subscribe({
                     router.navigateTo(Screens.UserScreen(it))
-                },{
+                }, {
                     println("Error: ${it.message}")
                 })
         }

@@ -11,12 +11,15 @@ import com.example.mygithubclient.mvp.presenter.list.IUserListPresenter
 import com.example.mygithubclient.mvp.view.list.UserItemView
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.item_user.view.*
+import javax.inject.Inject
 
 class UsersRVAdapter(
     private val presenter: IUserListPresenter,
-    private val imageLoader: IImageLoader<ImageView>
 ) :
     RecyclerView.Adapter<UsersRVAdapter.ViewHolder>() {
+
+    @Inject
+    lateinit var imageLoader: IImageLoader<ImageView>
 
     inner class ViewHolder(override val containerView: View) :
         RecyclerView.ViewHolder(containerView),

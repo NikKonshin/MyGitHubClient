@@ -16,13 +16,16 @@ import moxy.ktx.moxyPresenter
 
 class RepositoryFragment(private val userRepo: GithubRepository) : MvpAppCompatFragment(),
     RepositoryView, BackButtonListener {
-
     companion object {
         fun newInstance(userRepo: GithubRepository) = RepositoryFragment(userRepo)
     }
 
     private val presenter by moxyPresenter {
-        RepositoryPresenter(userRepo, App.instance.router)
+        RepositoryPresenter(
+            userRepo,
+        ).apply {
+            App.instance.appComponent.inject(this)
+        }
     }
 
     override fun onCreateView(

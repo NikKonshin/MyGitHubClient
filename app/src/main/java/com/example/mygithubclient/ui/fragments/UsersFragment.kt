@@ -5,37 +5,26 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.mygithubclient.ApiHolder
 import com.example.mygithubclient.App
 import com.example.mygithubclient.R
-import com.example.mygithubclient.mvp.model.cache.room.RoomGithubUsersCache
-import com.example.mygithubclient.mvp.model.entity.room.Database
-import com.example.mygithubclient.mvp.model.repo.retrofit.RetrofitGithubUsersRepo
 import com.example.mygithubclient.mvp.presenter.UsersPresenter
 import com.example.mygithubclient.mvp.view.UsersView
 import com.example.mygithubclient.ui.BackButtonListener
 import com.example.mygithubclient.ui.adapter.UsersRVAdapter
-import com.example.mygithubclient.ui.image.GlideImageLoader
-import com.example.mygithubclient.ui.network.AndroidNetworkStatus
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import kotlinx.android.synthetic.main.fragment_users.*
 import moxy.MvpAppCompatFragment
 import moxy.ktx.moxyPresenter
 
 class UsersFragment : MvpAppCompatFragment(), UsersView, BackButtonListener {
+
     companion object {
         fun newInstance() = UsersFragment()
     }
 
     private val presenter: UsersPresenter by moxyPresenter {
-        UsersPresenter(
-            AndroidSchedulers.mainThread(),
-            RetrofitGithubUsersRepo(
-                ApiHolder().api, AndroidNetworkStatus(App.instance),
-                RoomGithubUsersCache(Database.getInstance())
-            ),
-            App.instance.router
-        )
+        UsersPresenter().apply {
+            App.instance.appComponent.inject(this)
+        }
     }
 
     private var adapter: UsersRVAdapter? = null
@@ -49,7 +38,9 @@ class UsersFragment : MvpAppCompatFragment(), UsersView, BackButtonListener {
 
     override fun init() {
         rv_users.layoutManager = LinearLayoutManager(context)
-        adapter = UsersRVAdapter(presenter.usersListPresenter, GlideImageLoader())
+        adapter = UsersRVAdapter(presenter.usersListPresenter).apply {
+            App.instance.appComponent.inject(this)
+        }
         rv_users.adapter = adapter
 
     }
